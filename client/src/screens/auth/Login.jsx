@@ -1,83 +1,114 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
   View,
+  Text,
   TextInput,
   TouchableOpacity,
+  StyleSheet,
   Alert,
 } from 'react-native';
-import InputFeild from '../../components/InputFeild';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (email === '' || password === '') {
-      Alert.alert('Error', 'Please fill out all fields.');
-    } else {
-      Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
 
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', `Welcome, ${data.username || 'User'}!`);
+        // Handle successful login (e.g., navigate to another screen)
+      } else {
+        Alert.alert('Login Failed', data.message || 'Invalid credentials');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again later.');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <InputFeild/>
       <TextInput
         style={styles.input}
-        placeholder="Enter your email"
-        keyboardType="email-address"
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="Enter your password"
-        secureTextEntry
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
+        autoCapitalize="none"
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity
+        style={[styles.button, isLoading && styles.buttonDisabled]}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>{isLoading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default Login;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f8f8f8',
-    width:`100%`,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   input: {
     width: '100%',
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    padding: 15,
+    marginVertical: 10,
     backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   button: {
     width: '100%',
-    padding: 12,
+    padding: 15,
     backgroundColor: '#007BFF',
     borderRadius: 8,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#aaa',
   },
   buttonText: {
     color: '#fff',
@@ -85,3 +116,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default Login;
